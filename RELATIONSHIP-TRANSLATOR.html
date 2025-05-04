@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>💖 Love Language Translator 💕</title>
+  <style>
+    body {
+      font-family: 'Nunito', sans-serif;
+      background-color: #FFB6C1;
+      padding: 30px;
+      max-width: 800px;
+      margin: auto;
+    }
+    h1 {
+      text-align: center;
+      color: #FF69B4;
+    }
+    textarea, input, button {
+      width: 100%;
+      padding: 10px;
+      margin-top: 10px;
+      font-size: 16px;
+      border-radius: 15px;
+      border: 1px solid #FF69B4;
+      box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
+    }
+    button {
+      width: 48%;
+      margin: 5px 1%;
+      background: linear-gradient(to right, #FF69B4, #FFB6C1);
+      color: white;
+      border: none;
+      border-radius: 20px;
+      cursor: pointer;
+      font-weight: bold;
+      box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.2);
+      padding: 12px;
+    }
+    button:hover {
+      background: linear-gradient(to left, #FF69B4, #FFB6C1);
+    }
+    .option-card {
+      background: #FFFFFF;
+      border-radius: 15px;
+      padding: 15px;
+      margin-top: 15px;
+      box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
+    }
+    .option-title {
+      font-weight: bold;
+      color: #FF69B4;
+      margin-bottom: 8px;
+      font-size: 1.1em;
+    }
+    .option-message {
+      font-size: 15px;
+      line-height: 1.5;
+    }
+    .note {
+      background-color: #ffe4e1;
+      padding: 10px;
+      border-left: 4px solid #FF69B4;
+      border-radius: 5px;
+      margin-top: 20px;
+      font-style: italic;
+    }
+    /* Styles for the new mode buttons */
+    .mode-button {
+      width: 45%; /* Adjust width */
+      padding: 10px 15px;
+      margin: 5px;
+      font-size: 15px;
+      border-radius: 15px;
+      border: 1px solid #FF69B4;
+      background: linear-gradient(to right, #FF69B4, #FFB6C1); /* Use gradient background like other buttons */
+      color: white; /* Set default text color to white */
+      cursor: pointer;
+      transition: background-color 0.3s, color 0.3s, border 0.3s; /* Added border to transition */
+      box-shadow: 0px 1px 3px rgba(0, 0, 0, 0.1);
+      vertical-align: middle; /* Align buttons nicely if they wrap */
+    }
+    .mode-button.active {
+      /* background: linear-gradient(to right, #FF69B4, #FFB6C1); /* Removed background change */
+      /* color: white; */ /* Removed text color change */
+      font-weight: bold; /* Keep bold text */
+      border: 3px solid yellow; /* Added yellow border for active state */
+      background: linear-gradient(to right, #FF69B4, #FFB6C1); /* Keep background gradient when active */
+    }
+    .mode-button:not(.active):hover {
+        background: linear-gradient(to left, #FF69B4, #FFB6C1); /* Use reverse gradient on hover */
+        /* color: #FF69B4; */ /* Keep text white on hover */
+    }
+
+    /* Media Query for smaller screens */
+    @media (max-width: 600px) {
+      body {
+        padding: 15px; /* Reduce padding on smaller screens */
+      }
+      button, .mode-button {
+        width: 98%; /* Make buttons take almost full width */
+        margin: 8px 1%; /* Adjust margin for vertical stacking */
+        padding: 15px; /* Slightly larger padding for easier tapping */
+        font-size: 17px; /* Slightly larger font */
+      }
+      h1 {
+        font-size: 1.8em; /* Adjust heading size */
+      }
+      textarea, input {
+        font-size: 15px; /* Adjust input font size */
+      }
+      .option-card {
+        padding: 12px;
+      }
+      .option-title {
+        font-size: 1em;
+      }
+      .option-message {
+        font-size: 14px;
+      }
+      #modeSelector {
+        padding: 10px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <h1>💖 Love Language Translator 💕</h1>
+
+  <label for="apiKey">🔑 Enter Your Gemini API Key:</label>
+  <input type="text" id="apiKey" placeholder="Your API Key Here">
+
+  <button onclick="window.open('https://cloud.google.com/generative-language', '_blank')">🔗 Get Your API Key</button>
+
+  <!-- Mode Selector Buttons -->
+  <div id="modeSelector" style="margin-top: 20px; margin-bottom: 20px; background-color: #ffe4e1; padding: 15px; border-radius: 10px; text-align: center;">
+    <label style="font-weight: bold; color: #FF69B4; display: block; margin-bottom: 10px;">Choose Mode:</label>
+    <button id="btnModeTranslate" class="mode-button" onclick="setMode('translate')">🗣️ Translate My Words</button>
+    <button id="btnModeRespond" class="mode-button" onclick="setMode('respond')">💬 Get Response Options</button>
+  </div>
+
+  <label for="message" id="messageLabel">💬 Enter your message:</label>
+  <textarea id="message" rows="3" placeholder="Why don’t you clean the house?"></textarea>
+
+  <label for="reason" id="reasonLabel">🧠 (Optional) Add some context or reason:</label>
+  <textarea id="reason" rows="2" placeholder="It’s been messy for a week and it stresses me out."></textarea>
+
+  <div style="margin-top: 15px;">
+    <button onclick="processMessage()" id="mainButton">🔄 Translate ❤️</button>
+  </div>
+
+  <div id="output" style="margin-top: 25px;"></div>
+
+  <script>
+    let currentMode = 'translate'; // Default mode, managed by setMode
+
+    // NEW function to handle mode switching via buttons
+    function setMode(newMode) {
+      currentMode = newMode;
+      // Update button styles to show active state
+      document.getElementById('btnModeTranslate').classList.toggle('active', newMode === 'translate');
+      document.getElementById('btnModeRespond').classList.toggle('active', newMode === 'respond');
+      // Update the rest of the UI based on the new mode
+      updateUI();
+    }
+
+    // MODIFIED Function to update UI elements based on selected mode
+    function updateUI() {
+      // const mode = document.querySelector('input[name="mode"]:checked').value; // No longer reading from radio
+      const mode = currentMode; // Use the global variable
+      const messageLabel = document.getElementById('messageLabel');
+      const messageInput = document.getElementById('message');
+      const reasonLabel = document.getElementById('reasonLabel');
+      const reasonInput = document.getElementById('reason');
+      const mainButton = document.getElementById('mainButton');
+      const outputBox = document.getElementById('output');
+
+      if (mode === 'translate') {
+        messageLabel.innerHTML = "💬 Enter your message to translate:";
+        messageInput.placeholder = "Why don’t you clean the house?";
+        reasonLabel.style.display = 'block'; // Show reason for translation
+        reasonInput.style.display = 'block';
+        reasonInput.placeholder = "It’s been messy for a week and it stresses me out.";
+        mainButton.innerHTML = "🔄 Translate ❤️";
+      } else { // mode === 'respond'
+        messageLabel.innerHTML = "💬 Enter the message you received:";
+        messageInput.placeholder = "e.g., 'I feel like you're not listening to me.'";
+        reasonLabel.style.display = 'none'; // Hide reason for response options
+        reasonInput.style.display = 'none';
+        mainButton.innerHTML = "💡 Get Response Options";
+      }
+      outputBox.innerHTML = ""; // Clear output when mode changes
+    }
+
+    // MODIFIED function to handle both modes
+    async function processMessage() {
+      // const mode = document.querySelector('input[name="mode"]:checked').value; // No longer reading from radio
+      const mode = currentMode; // Use the global variable
+      const message = document.getElementById('message').value.trim();
+      const reason = document.getElementById('reason').value.trim(); // Still get reason, but only use if mode is 'translate'
+      const outputBox = document.getElementById('output');
+      const apiKey = document.getElementById('apiKey').value.trim();
+
+      if (!apiKey) {
+        alert("Please enter your Gemini API key.");
+        return;
+      }
+
+      outputBox.innerHTML = "<p>Processing...</p>"; // Generic processing message
+
+      let userPrompt = "";
+
+      if (mode === 'translate') {
+        // Prompt for translating the user's own words
+        userPrompt = `Translate the following message into 3-5 emotionally aware and respectful alternative phrasings. Include different emotional tones (e.g., gentle, direct but kind, empathetic, curious).
+Original Message: "${message}"${reason ? " Context/Reason: " + reason : ""}
+Return the response as a JSON array where each object has a "title" (including emoji and tone description) and a "message" key representing the translated phrasing. Example: [{"title": "😇 Gentle Inquiry", "message": "Your translated message here."}]`;
+      } else { // mode === 'respond'
+        // Prompt for generating response options to a received message
+        userPrompt = `I received the following message. Provide 3-5 potential response options that are emotionally intelligent, constructive, and respectful. Include different approaches (e.g., validating, clarifying, setting boundaries, empathetic).
+Received Message: "${message}"
+Return the response as a JSON array where each object has a "title" (including emoji and approach description) and a "message" key representing the suggested response. Example: [{"title": "✅ Validating Response", "message": "Your suggested response here."}]`;
+        // Note: 'reason' is ignored in this mode as it doesn't make sense for received messages.
+      }
+
+
+      try {
+        const response = await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=" + apiKey, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            // Added generationConfig to encourage JSON output
+            generationConfig: { responseMimeType: "application/json" },
+            contents: [{ role: "user", parts: [{ text: userPrompt }] }]
+          })
+        });
+
+        const data = await response.json();
+        // Expecting JSON directly in the response part now
+        const rawJsonString = data.candidates?.[0]?.content?.parts?.[0]?.text || "[]"; // Default to empty array string
+
+        outputBox.innerHTML = formatOutput(rawJsonString); // Pass JSON string to formatOutput
+
+      } catch (err) {
+        console.error(err);
+        outputBox.innerHTML = "<p style='color:red;'>Error processing your request.</p>";
+      }
+    }
+
+    function formatOutput(jsonString) {
+      let formattedOutput = "";
+      let options = [];
+
+      try {
+        // Clean potential markdown code block fences before parsing
+        const cleanedJsonString = jsonString.replace(/^```json\s*|\s*```$/g, '');
+        options = JSON.parse(cleanedJsonString);
+      } catch (e) {
+        console.error("Error parsing JSON:", e);
+        console.error("Received string:", jsonString); // Log the problematic string
+        return "<p style='color:red;'>Error: Could not parse the response from the API. Please check the console for details.</p>";
+      }
+
+      if (!Array.isArray(options) || options.length === 0) {
+         // Handle cases where parsing might succeed but yield non-array or empty array
+         // const mode = document.querySelector('input[name="mode"]:checked').value; // No longer reading from radio
+         const mode = currentMode; // Use the global variable
+         const errorMsg = mode === 'translate' ? "No translation options received." : "No response options received.";
+         if (jsonString === "[]") { // Check if it was the default empty array string
+             return `<p>${errorMsg}</p>`;
+         }
+         // If it wasn't the default empty array, log the original string for debugging
+         console.error("Received non-array or empty array JSON:", jsonString);
+         return "<p style='color:red;'>Error: Received unexpected data format from the API.</p>";
+      }
+
+      options.forEach(option => {
+        // Ensure keys exist, provide defaults if not
+        const title = option.title || "Untitled";
+        const message = option.message || "No message content.";
+
+        // Create the HTML for each option card using JSON data
+        formattedOutput += `
+          <div class="option-card">
+            <div class="option-title" style="font-weight: bold; color: #FF69B4;">${title}</div>
+            <div class="option-message">${message.replace(/\n/g, '<br>')}</div>
+          </div>
+        `;
+      });
+
+      return formattedOutput;
+    }
+
+    // MODIFIED Call setMode initially on DOM load to set the default mode and apply styles/UI updates
+    document.addEventListener('DOMContentLoaded', () => {
+      setMode('translate'); // Initialize UI with default mode ('translate') and styles
+    });
+</script>
+</body>
+</html>
